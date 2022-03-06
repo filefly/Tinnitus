@@ -52,8 +52,8 @@ def get_git_info():
     try:
         github_repo_url = config.get("github_repo_url")
         log_format_str = f"I am deployed from Git commit [%h]({github_repo_url}/commit/%H) (%ci): \"%s\""
-        process = subprocess.run(["git", "log", "-1", f"--pretty=format:{log_format_str}"], encoding="utf-8", check=True, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
-        return process.stdout
+        git_log = subprocess.check_output(["git", "log", "-1", f"--pretty=format:{log_format_str}"]).decode("utf-8")
+        return git_log
     except Exception as e:
         return ""
 
