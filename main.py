@@ -244,7 +244,7 @@ class YouTubeMusicBot(commands.Cog):
         self.play_queue.clear()
         await self.queue(ctx)
 
-    @commands.command(aliases=["ver", "v"])
+    @commands.command(aliases=["ver"])
     async def version(self, ctx):
         """Display the bot's version"""
         git_info = get_git_info()
