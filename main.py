@@ -1,5 +1,6 @@
 import asyncio
 import disnake
+import os
 import subprocess
 import yt_dlp
 from collections import deque
@@ -10,6 +11,7 @@ from disnake.errors import ClientException
 from random import shuffle
 from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_fixed
 
+os.chdir(os.path.dirname(os.path.abspath(__file__)))  # Make sure our working dir is the one we're running out of
 yt_dlp.utils.bug_reports_message = lambda: ""
 
 ytdl_format_options = {
