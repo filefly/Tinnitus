@@ -9,6 +9,7 @@ from disnake import Embed
 from disnake.ext import commands
 from disnake.errors import ClientException
 from random import shuffle
+from sys import exit
 from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_fixed
 
 os.chdir(os.path.dirname(os.path.abspath(__file__)))  # Make sure our working dir is the one we're running out of
@@ -138,6 +139,10 @@ class YouTubeMusicBot(commands.Cog):
         self.bot = bot
         self.play_queue = PlayQueue()
 
+    async def is_owner(self, ctx):
+        """Return True if a command is being executed by a bot owner"""
+        return ctx.message.author.id and str(ctx.message.author.id) == config.get('owner_id')
+
     async def create_embed(self, title, author=Embed.Empty, image=Embed.Empty, color=0x114411, description=Embed.Empty, url=Embed.Empty, fields=Embed.Empty, footer=Embed.Empty):
         embed = disnake.Embed(title=title, color=color, url=url, description=description)
         if author:
@@ -246,6 +251,13 @@ class YouTubeMusicBot(commands.Cog):
         version_info = f"I am {config.get('bot_name')} v{config.get('bot_version')}. {git_info}"
         embed = await self.create_embed(title="Version Info", description=f"{version_info}")
         await ctx.reply(embed=embed)
+
+    @commands.command()
+    async def kill(self, ctx):
+        """Shut down with a non-zero exit code; may restart if configured as a service"""
+        if not self.is_owner(ctx):
+            return
+        exit(1)
 
     @commands.Cog.listener()
     async def on_voice_state_update(self, member, before, after):
