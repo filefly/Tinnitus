@@ -1,7 +1,7 @@
 """
 config = {
     "command_prefix": ".",
-    "owner_id": "discord_id_of_owner_goes_here",
+    "owner_ids": ["discord_ids_of_owners_go_here"],
     "api_token": "discord_api_token_goes_here",
     "github_repo_url": "https://github.com/url/to/repo",
     "bot_name": "YouTubeMusicBot",
@@ -11,7 +11,7 @@ config = {
 
 config = {
     "command_prefix": "",
-    "owner_id": "",
+    "owner_ids": [""],
     "api_token": "",
     "github_repo_url": "",
     "bot_name": "",

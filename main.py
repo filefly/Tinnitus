@@ -130,8 +130,8 @@ class YTDLSource(disnake.PCMVolumeTransformer):
         try:
             return cls(disnake.FFmpegPCMAudio(data["url"], **ffmpeg_options), data=data)
         except Exception as e:
-            print(f"ffmpeg failure: {e}")
-            raise commands.CommandError(f"<@{config.get('owner_id')}> FFmpeg says: \"{str(e)}\"")
+            owners = " ".join(["<@"+str(i)+">" for i in config.get('owner_ids')])
+            raise commands.CommandError(f"{owners} FFmpeg says: \"{str(e)}\"")
 
 
 class YouTubeMusicBot(commands.Cog):
@@ -141,7 +141,7 @@ class YouTubeMusicBot(commands.Cog):
 
     async def is_owner(self, ctx):
         """Return True if a command is being executed by a bot owner"""
-        return ctx.message.author.id and str(ctx.message.author.id) == config.get('owner_id')
+        return ctx.message.author.id and str(ctx.message.author.id) in config.get('owner_ids')
 
     async def create_embed(self, title, author=Embed.Empty, image=Embed.Empty, color=0x114411, description=Embed.Empty, url=Embed.Empty, fields=Embed.Empty, footer=Embed.Empty):
         embed = disnake.Embed(title=title, color=color, url=url, description=description)
