@@ -278,7 +278,7 @@ class YouTubeMusicBot(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        await self.bot.change_presence(activity=disnake.Game(name=f"music. Type {config.get('command_prefix')}help for help."))
+        await self.bot.change_presence(activity=disnake.Game(name=f"music"))
         print(f"Logged in as {bot.user} ({bot.user.id})")
 
     @join.before_invoke
@@ -327,6 +327,6 @@ class YouTubeMusicBot(commands.Cog):
                 print(e)
 
 
-bot = commands.Bot(command_prefix=commands.when_mentioned_or(config.get("command_prefix")), case_insensitive=True)
+bot = commands.Bot(command_prefix=commands.when_mentioned_or(config.get("command_prefix")), case_insensitive=True, help_command=None)
 bot.add_cog(YouTubeMusicBot(bot))
 bot.run(config.get("api_token"))
