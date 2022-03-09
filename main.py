@@ -134,7 +134,7 @@ class YTDLSource(disnake.PCMVolumeTransformer):
             raise commands.CommandError(f"{owners} FFmpeg says: \"{str(e)}\"")
 
 
-class YouTubeMusicBot(commands.Cog):
+class MusicBot(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.play_queue = PlayQueue()
@@ -328,5 +328,5 @@ class YouTubeMusicBot(commands.Cog):
 
 
 bot = commands.Bot(command_prefix=commands.when_mentioned_or(config.get("command_prefix")), case_insensitive=True, help_command=None)
-bot.add_cog(YouTubeMusicBot(bot))
+bot.add_cog(MusicBot(bot))
 bot.run(config.get("api_token"))
