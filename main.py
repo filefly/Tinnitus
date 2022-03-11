@@ -1,6 +1,7 @@
 import asyncio
 import disnake
 import os
+import re
 import subprocess
 import yt_dlp
 from collections import deque
@@ -107,7 +108,7 @@ class YTDLSource(disnake.PCMVolumeTransformer):
     def __init__(self, source, *, data, volume=1.0):
         super().__init__(source, volume)
         self.data = data
-        self.title = data.get("title")
+        self.title = self.sanitize_title(data.get("title"))
         self.media_url = data.get("url")
         self.original_url = data.get("original_url")
         self.duration = data.get("duration")
@@ -132,6 +133,12 @@ class YTDLSource(disnake.PCMVolumeTransformer):
         except Exception as e:
             owners = " ".join(["<@"+str(i)+">" for i in config.get('owner_ids')])
             raise commands.CommandError(f"{owners} FFmpeg says: \"{str(e)}\"")
+
+    def sanitize_title(self, title):
+        """Attempt to remove video-specific descriptions from title"""
+        pattern = r'\s-?\s?[(\[]?(Official )?(Music )?(Audio|Video|Lyrics)[)\]]?'
+        match = re.compile(pattern, flags=re.IGNORECASE)
+        return match.sub('', title)
 
 
 class MusicBot(commands.Cog):
