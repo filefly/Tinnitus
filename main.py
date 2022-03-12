@@ -136,7 +136,7 @@ class YTDLSource(disnake.PCMVolumeTransformer):
 
     def sanitize_title(self, title):
         """Attempt to remove video-specific descriptions from title"""
-        pattern = r'\s-?\s?[(\[]?(Official )?(Music )?(Audio|Video|Lyrics)[)\]]?'
+        pattern = r'\s-?\s?[(\[]?((Official|HD|Music)\s?)*(Audio|Video|Lyrics)[)\]]?'
         match = re.compile(pattern, flags=re.IGNORECASE)
         return match.sub('', title)
 
