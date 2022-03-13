@@ -165,8 +165,9 @@ class MusicBot(commands.Cog):
             embed.set_image(url=image)
         if footer:
             embed.set_footer(text=footer)
-        for field in fields:
-            embed.add_field(name=field["name"], value=field["value"])
+        if fields:  # this is required since Embed.Empty is not an iterable
+            for field in fields:
+                embed.add_field(name=field["name"], value=field["value"])
         return embed
 
     @commands.command()
