@@ -150,6 +150,13 @@ class MusicBot(commands.Cog):
         """Return True if a command is being executed by a bot owner"""
         return ctx.message.author.id and str(ctx.message.author.id) in config.get('owner_ids')
 
+    async def status_task(self):
+        while True:
+            await self.bot.change_presence(activity=disnake.Game(name=f"music"))
+            await asyncio.sleep(8)
+            await self.bot.change_presence(activity=disnake.Game(name=f"it loud"))
+            await asyncio.sleep(8) 
+
     async def create_embed(self, title, author=Embed.Empty, image=Embed.Empty, color=0x114411, description=Embed.Empty, url=Embed.Empty, fields=Embed.Empty, footer=Embed.Empty):
         embed = disnake.Embed(title=title, color=color, url=url, description=description)
         if author:
@@ -285,7 +292,7 @@ class MusicBot(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        await self.bot.change_presence(activity=disnake.Game(name=f"music"))
+        self.bot.loop.create_task(self.status_task())
         print(f"Logged in as {bot.user} ({bot.user.id})")
 
     @join.before_invoke
