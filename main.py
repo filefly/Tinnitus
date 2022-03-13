@@ -1,5 +1,6 @@
 import asyncio
 import disnake
+import logging
 import os
 import re
 import subprocess
@@ -12,6 +13,10 @@ from disnake.errors import ClientException
 from random import shuffle
 from sys import exit
 from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_fixed
+
+logging.basicConfig(level=logging.DEBUG)
+logging.getLogger('disnake').setLevel(logging.INFO)
+logger = logging.getLogger('bot')
 
 os.chdir(os.path.dirname(os.path.abspath(__file__)))  # Make sure our working dir is the one we're running out of
 yt_dlp.utils.bug_reports_message = lambda: ""
@@ -56,9 +61,11 @@ def get_git_info():
     try:
         github_repo_url = config.get("github_repo_url")
         log_format_str = f"I am deployed from Git commit [%h]({github_repo_url}/commit/%H) (%ci): \"%s\""
+        logger.debug("Calling git to retrieve latest commit info")
         process = subprocess.run(["git", "log", "-1", f"--pretty=format:{log_format_str}"], encoding="utf-8", check=True, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
         return process.stdout
     except Exception as e:
+        logger.error(f"Unable to retrieve latest commit info: {e}")
         return ""
 
 
@@ -120,8 +127,10 @@ class YTDLSource(disnake.PCMVolumeTransformer):
     async def from_url(cls, url, *, loop=None):
         loop = loop or asyncio.get_event_loop()
         try:
+            logger.debug(f"Getting video data for query: \"{url}\"")
             data = await loop.run_in_executor(None, lambda: ytdl.sanitize_info(ytdl.extract_info(url, download=False)))
         except Exception as e:
+            logger.error(f"Unable to get video data for query: \"{url}\". \"{e}\"")
             raise commands.CommandError(f"YouTube says: \"{str(e).replace('ERROR: ', '')}\"")
 
         if 'entries' in data:
@@ -129,16 +138,21 @@ class YTDLSource(disnake.PCMVolumeTransformer):
             data = data["entries"][0]
 
         try:
+            logger.debug(f"Calling ffmpeg to decode data for url: {data['url']}")
             return cls(disnake.FFmpegPCMAudio(data["url"], **ffmpeg_options), data=data)
         except Exception as e:
+            logger.error(f"Unable to call ffmpeg: \"{e}\"")
             owners = " ".join(["<@"+str(i)+">" for i in config.get('owner_ids')])
             raise commands.CommandError(f"{owners} FFmpeg says: \"{str(e)}\"")
 
     def sanitize_title(self, title):
         """Attempt to remove video-specific descriptions from title"""
+        logger.debug(f"Attempting to sanitize title: \"{title}\"")
         pattern = r'\s-?\s?[(\[]?((Official|HD|Music)\s?)*(Audio|Video|Lyrics)[)\]]?'
         match = re.compile(pattern, flags=re.IGNORECASE)
-        return match.sub('', title)
+        new_title = match.sub('', title)
+        logger.debug(f"Sanitized title is: \"{new_title}\"")
+        return new_title
 
 
 class MusicBot(commands.Cog):
@@ -176,8 +190,10 @@ class MusicBot(commands.Cog):
         if ctx.author.voice:
             channel = ctx.author.voice.channel
             if ctx.voice_client is not None:
+                logger.debug(f"I was asked to move to channel \"{channel}\" on the server \"{ctx.guild}\"")
                 await ctx.voice_client.move_to(channel)
             else:
+                logger.debug(f"I was asked to join channel \"{channel}\" on the server \"{ctx.guild}\"")
                 await channel.connect()
             await ctx.guild.change_voice_state(channel=channel, self_deaf=True, self_mute=False)
         
@@ -186,10 +202,12 @@ class MusicBot(commands.Cog):
         """Add a track to the queue, or play immediately if the queue is empty"""
         async with ctx.typing():
             if ctx.voice_client and ctx.voice_client.is_playing():
+                logger.debug(f"Already playing, so adding \"{url}\" to play queue")
                 player = await YTDLSource.from_url(url, loop=self.bot.loop)
                 self.play_queue.add({"ctx": ctx, "url": url, "original_url": player.original_url, "title": player.title, "duration": player.duration, "added_by": str(ctx.author).split("#")[0]})
                 await self.queue(ctx)
             if self.play_queue.is_empty():
+                logger.debug(f"Playing \"{url}\" immediately")
                 await self.stream_from_yt(ctx, url)
 
     @commands.command()
@@ -200,6 +218,8 @@ class MusicBot(commands.Cog):
         elif not ctx.voice_client:
             raise commands.CommandError("I'm not playing anything right now.")
         else:
+            channel = ctx.author.voice.channel
+            logger.debug(f"Disconnecting from channel \"{channel}\" on the server \"{ctx.guild}\"")
             await ctx.voice_client.disconnect()
 
     @commands.command(aliases=["next"])
@@ -280,12 +300,14 @@ class MusicBot(commands.Cog):
         if vc is None:
             return
         if len(vc.channel.voice_states.keys()) == 1:
+            logger.debug(f"Disconnecting from channel \"{vc.channel}\" on the server \"{member.guild}\" because no one is in the channel")
             await vc.disconnect()
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
-        """Return command errors, ignoring nonexistant commands"""
+        """Return command errors, ignoring nonexistent commands"""
         if isinstance(error, commands.CommandNotFound):
+            logger.debug(f"Got a nonexistent command trigger; ignoring it: \"{error}\"")
             return
         embed = await self.create_embed(title="Error", color=0x441111, description=error)
         await ctx.reply(embed=embed)
@@ -293,7 +315,7 @@ class MusicBot(commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self):
         self.bot.loop.create_task(self.status_task())
-        print(f"Logged in as {bot.user} ({bot.user.id})")
+        logger.info(f"Logged in as {bot.user} ({bot.user.id})")
 
     @join.before_invoke
     @play.before_invoke
@@ -331,7 +353,9 @@ class MusicBot(commands.Cog):
 
     def done_playing(self, *args):
         """Play the next track in the queue, if there is one"""
+        logger.debug("Finished playing a track")
         if not self.play_queue.is_empty():
+            logger.debug("Playing the next track")
             queue_entry = self.play_queue.get_next()
             play_next = self.stream_from_yt(queue_entry["ctx"], queue_entry["url"])
             fut = asyncio.run_coroutine_threadsafe(play_next, self.bot.loop)
