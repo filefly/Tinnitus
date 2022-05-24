@@ -5,7 +5,6 @@ import re
 import subprocess
 import yt_dlp
 from collections import deque
-from config import config
 from disnake import Embed
 from disnake.ext import commands
 from disnake.errors import ClientException
@@ -343,6 +342,6 @@ class MusicBot(commands.Cog):
                 print(e)
 
 
-bot = commands.Bot(command_prefix=commands.when_mentioned_or(config.get("command_prefix")), case_insensitive=True, help_command=None)
+bot = commands.Bot(command_prefix=commands.when_mentioned_or(config.get("command_prefix")), intents=disnake.Intents(message_content=True), case_insensitive=True, help_command=None)
 bot.add_cog(MusicBot(bot))
 bot.run(config.get("api_token"))
