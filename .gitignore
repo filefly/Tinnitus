@@ -154,3 +154,4 @@ cython_debug/
 config.py
 .DS_Store
 config.test.py
+config_test.py
