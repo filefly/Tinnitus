@@ -148,7 +148,7 @@ class MusicBot(commands.Cog):
 
     async def is_owner(self, ctx):
         """Return True if a command is being executed by a bot owner"""
-        return ctx.message.author.id and str(ctx.message.author.id) in config.get('owner_ids')
+        return ctx.message.author.id and str(ctx.message.author.id) in config.get("owner_ids")
 
     async def status_task(self):
         while True:
@@ -222,10 +222,8 @@ class MusicBot(commands.Cog):
             embed = await self.create_embed(title="Play Queue", description="There are no tracks in the queue.")
             await ctx.reply(embed=embed)
         else:
-            counter = int()
             output = str()
-            for entry in self.play_queue:
-                counter += 1
+            for counter, entry in enumerate(self.play_queue):
                 output += f"{counter}.  {entry['title']} ({duration_to_hms(entry['duration'])}) [Added by {entry['added_by']}]\n"
             fields = [{"name": "Tracks", "value": self.play_queue.length()}, {"name": "Total play time", "value": self.play_queue.total_duration()}]
             embed = await self.create_embed(title="Play Queue", description=output, fields=fields)
