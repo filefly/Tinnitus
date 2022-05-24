@@ -14,6 +14,10 @@ from sys import exit
 from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_fixed
 
 os.chdir(os.path.dirname(os.path.abspath(__file__)))  # Make sure our working dir is the one we're running out of
+if os.environ.get("BOT_DEV"):
+    from config_test import config
+else:
+    from config import config
 yt_dlp.utils.bug_reports_message = lambda: ""
 
 ytdl_format_options = {
